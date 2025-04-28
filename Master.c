@@ -21,6 +21,10 @@
 #include <stdio.h>
 #include <stdbool.h>
 
+// These include functions to handle lcd and keypad
+#include "lcd_handler.h"
+#include "keypad_handler.h"
+
 static void USART_init(uint16_t ubrr){
     UBRR0H = (unsigned char) (ubrr >> 8); // set baud rate in UBBR0H and UBBR0L p. 206
     UBRR0L = (unsigned char) ubrr;
@@ -105,6 +109,7 @@ int datatransfer(uint8_t send, uint8_t status, uint8_t receive){
 int main(void)
 {
     USART_init(MYUBBR); //initialize USART with 9600 Baud
+    lcd_setup(); // initialize lcd
     
     stdout = &uart_output; // redirect stdin/out to UART function
     stdin = &uart_input;
@@ -128,6 +133,7 @@ int main(void)
             twi_send_data = 1;
         } else{
             twi_send_data = 0;
+            handle_keypad_input(); // detect kaypad buttons 
         }
         
         // Sends 'twi_send_data' - value to slave, slave does emergency in this case
