@@ -91,9 +91,9 @@ FILE uart_input = FDEV_SETUP_STREAM(NULL, USART_Receive, _FDEV_SETUP_READ);
 int main(void)
 {
     DDRB |= (1 << PB0);  // Movement LED
-    DDRB |= (1 << PB1);  // Door LED OTA JOKU
+    DDRB |= (1 << PB2);  // Door LED OTA JOKU
     DDRB |= (1 << PB5);  // Emergency LED
-    DDRB |= (1 << PB2);  // Buzzer (if used separately)
+    DDRB |= (1 << PB1);  // Buzzer (if used separately)
 
     USART_init(MYUBBR);
     stdout = &uart_output;
