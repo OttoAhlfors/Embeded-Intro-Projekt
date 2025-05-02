@@ -8,7 +8,7 @@
 #include "keypad_handler.h"
 #include "lcd_handler.h" // So you can call write_to_lcd()
 
-void handle_keypad_input(void) {
+int handle_keypad_input(void) {
 	uint8_t key_signal = KEYPAD_GetKey();
 	_delay_ms(300);
 
@@ -22,7 +22,9 @@ void handle_keypad_input(void) {
 			key_str[0] = key_signal;
 			key_str[1] = '\0';
 		}
-
-		write_to_lcd("Key Pressed:", key_str);
+	
+		return key_signal;
 	}
+	
+	return 0;
 }

@@ -16,6 +16,6 @@
 /**
  * @brief Handles keypad input and updates the LCD with the key pressed.
  */
-void handle_keypad_input(void);
+int handle_keypad_input(void);
 
 #endif // KEYPAD_HANDLER_H
