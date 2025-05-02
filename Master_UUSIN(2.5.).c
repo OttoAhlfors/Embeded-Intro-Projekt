@@ -99,7 +99,7 @@ int main(void) {
     stdout = &uart_output; // redirect stdin/out to UART function
     stdin = &uart_input;
 
-    // Initialize TWI/I²C
+    // Initialize TWI/IÂ²C
     TWBR = 0x03; // TWI bit rate register.
     TWSR = 0x00; // TWI status register prescaler value set to 1
     
