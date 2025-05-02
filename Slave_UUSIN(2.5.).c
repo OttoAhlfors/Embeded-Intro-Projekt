@@ -99,7 +99,7 @@ int main(void)
     stdout = &uart_output;
     stdin = &uart_input;
 
-    // Setup I²C as slave
+    // Setup IÂ²C as slave
     TWAR = (SLAVE_ADDRESS << 1);             // Slave address
     TWCR = (1 << TWEA) | (1 << TWEN);        // Enable TWI + ACK
 
