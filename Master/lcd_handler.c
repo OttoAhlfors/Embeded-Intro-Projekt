@@ -3,11 +3,12 @@
  *
  * Created: 20.4.2025 12.39.02
  *  Author: Otto Åhlfors
- */ 
+ */
 
 #include "lcd_handler.h"
 
-void lcd_setup() {
+void lcd_setup()
+{
 	lcd_init(LCD_DISP_ON);
 	lcd_clrscr();
 	lcd_puts("Ready");
@@ -15,10 +16,14 @@ void lcd_setup() {
 	KEYPAD_Init();
 }
 
-void write_to_lcd(const char* line1, const char* line2) {
+void write_to_lcd(const char *line1, const int *line2)
+{
+	char floorStr[8];
+	itoa(line2, floorStr, 10);
+
 	lcd_clrscr();
 	lcd_gotoxy(0, 0);
 	lcd_puts(line1);
 	lcd_gotoxy(0, 1);
-	lcd_puts(line2);
+	lcd_puts(floorStr);
 }

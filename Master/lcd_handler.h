@@ -3,7 +3,7 @@
  *
  * Created: 20.4.2025 12.39.36
  *  Author: Otto Åhlfors
- */ 
+ */
 
 #ifndef LCD_HANDLER_H
 #define LCD_HANDLER_H
@@ -15,6 +15,6 @@
 
 void lcd_setup(void);
 
-void write_to_lcd(const char* line1, const char* line2);
+void write_to_lcd(const char *line1, const int *line2);
 
 #endif
