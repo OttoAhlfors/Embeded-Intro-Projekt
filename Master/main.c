@@ -107,8 +107,35 @@ void sendCommandToSlave(uint8_t command)
 	TWCR = (1 << TWINT) | (1 << TWEN) | (1 << TWSTO); // Send STOP
 }
 
-int main(void)
+void displayFloorMessage(const char *format, int floorNumber, const char *doorOpen)
 {
+    char message[50];
+    sprintf(message, format, floorNumber);
+    write_to_lcd(message, doorOpen);
+}
+
+void handleEmergency(int currentFloor, char *doorOpen)
+{
+    uint8_t escape = 0;
+
+    displayFloorMessage("EMERGENCY %d", currentFloor, doorOpen);
+    sendCommandToSlave(0x03);// Blink movement LED = FAULT
+    while (1)
+    {
+        escape = handleEmergencyKey();
+        if (escape == 1)
+        {
+            //state = DOOR_OPEN;
+            sendCommandToSlave(0x06);// Play buzzer melody
+            state = IDLE;
+            break;
+        }
+    }
+}
+
+int main(void)
+{   
+    lcd_clrscr();
 	USART_init(MYUBBR); // initialize USART with 9600 Baud
 	lcd_setup();		// initialize lcd
 
@@ -123,113 +150,85 @@ int main(void)
 
 	DDRA &= ~(1 << PA0); // Emergency button as input
 	uint8_t emergency_button = 0;
-
+    char message[50];
+    char doorOpen[15] = "Door closed";
+    
 	while (1)
 	{
-		// Emergency check
-		emergency_button = (PINA & (1 << PA0));
-		if (emergency_button)
-		{
-			sendCommandToSlave(0x06); // Emergency LED/buzzer
-		}
+
 
 		switch (state)
 		{
 		case IDLE:
-			selectedFloor = handle_keypad_input; // Updates keypad buffer
-			// selectedFloor = getSelectedFloor(); // Read pressed floor
-			if (selectedFloor > 0 && selectedFloor <= 99)
+            displayFloorMessage("Floor: %d", currentFloor, doorOpen);
+			selectedFloor = handle_keypad_input(); // Updates keypad buffer
+            printf("t");
+            printf("%d\n",selectedFloor);
+			if (selectedFloor >= 0 && selectedFloor <= 99)
 			{
 				state = FLOOR_SELECTED;
 			}
 			break;
 
-		case FLOOR_SELECTED:
-			if (selectedFloor == currentFloor)
-			{
-				sendCommandToSlave(0x03); // Blink movement LED = FAULT
-				write_to_lcd("already on the floor", currentFloor);
-				state = DOOR_OPEN;
-			}
-			else
-			{
-				sendCommandToSlave(0x01); // Turn on movement LED
-				write_to_lcd("Moving to floor", selectedFloor);
-				_delay_ms(3000); // Simulate movement delay
+        case FLOOR_SELECTED:
+        if (selectedFloor == currentFloor)
+        {
+            sendCommandToSlave(0x03); // Blink movement LED = FAULT
+            displayFloorMessage("Already on %d", currentFloor, doorOpen);
+            _delay_ms(2000);
+            state = DOOR_OPEN;
+        }
+        else
+        {
+            sendCommandToSlave(0x01); // Turn on movement LED
+            displayFloorMessage("Moving to %d", selectedFloor, doorOpen);
+           
+            _delay_ms(3000); // Simulate movement delay
 
-				while (1)
-				{
-					write_to_lcd("Current floor", currentFloor);
-					_delay_ms(100);
+            while (1)
+            {
 
-					if (currentFloor < selectedFloor)
-					{
-						currentFloor++;
-					}
-					else if (currentFloor > selectedFloor)
-					{
-						currentFloor--;
-					}
-					else
-						(currentFloor == selectedFloor)
-						{
-							break;
-						}
+                displayFloorMessage("Current floor %d", currentFloor, doorOpen);
+                _delay_ms(150);
 
-					sendCommandToSlave(0x02); // Turn off movement LED
-					write_to_lcd("Arrived on floor", selectedFloor);
-					currentFloor = selectedFloor;
-					state = DOOR_OPEN;
-				}
-			}
-			break;
+                if (currentFloor < selectedFloor)
+                {
+                    currentFloor++;
+                }
+                else if (currentFloor > selectedFloor)
+                {
+                    currentFloor--;
+                }
+                else if (currentFloor == selectedFloor)
+                {
+                    break;
+                }
+                emergency_button = (PINA & (1 << PA0)); // Emergency check
+                if (emergency_button)
+                {   
+                    handleEmergency(currentFloor, doorOpen);
+                    break;
+                }
 
-		case FLOOR_SELECTED:
-			if (selectedFloor == currentFloor)
-			{
-				sendCommandToSlave(0x03); // Blink movement LED = FAULT
-				char floorStr[8];
-				itoa(currentFloor, floorStr, 10);
-				write_to_lcd("Already on the floor", floorStr);
-				state = DOOR_OPEN;
-			}
-			else
-			{
-				sendCommandToSlave(0x01); // Turn on movement LED
-				char selectedFloorStr[8];
-				char currentFloorStr[8];
-				itoa(selectedFloor, selectedFloorStr, 10);
-				write_to_lcd("Moving to floor", selectedFloorStr);
-				_delay_ms(1000);
+            }
+            sendCommandToSlave(0x02); // Turn off movement LED
+            displayFloorMessage("Arrived on %d", currentFloor, doorOpen);
+            
+            _delay_ms(1000);
+            state = DOOR_OPEN;
+        }
+        break;
 
-				while (currentFloor != selectedFloor)
-				{
-					_delay_ms(500); // Delay between floors
 
-					if (currentFloor < selectedFloor)
-					{
-						currentFloor++;
-					}
-					else
-					{
-						currentFloor--;
-					}
-
-					itoa(currentFloor, currentFloorStr, 10);
-					write_to_lcd("Current floor", currentFloorStr);
-				}
-
-				sendCommandToSlave(0x02); // Turn off movement LED
-				write_to_lcd("Arrived on floor", currentFloorStr);
-				state = DOOR_OPEN;
-			}
-			break;
 
 		case DOOR_OPEN:
-			_delay_ms(1000);
+			_delay_ms(100);
+            strcpy(doorOpen,"Door open");
+            displayFloorMessage("Arrived on %d", currentFloor, doorOpen); 
 			sendCommandToSlave(0x04); // Open door LED
-			_delay_ms(2000);		  // Hold door open
+			_delay_ms(5000);		  // Hold door open
 			sendCommandToSlave(0x05); // Close door LED
+            strcpy(doorOpen, "Door closed");
 			state = IDLE;
 			break;
 

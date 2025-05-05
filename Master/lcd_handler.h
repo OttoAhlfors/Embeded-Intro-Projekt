@@ -15,6 +15,6 @@
 
 void lcd_setup(void);
 
-void write_to_lcd(const char *line1, const int *line2);
+void write_to_lcd(const char *line1, const char *line2);
 
 #endif
