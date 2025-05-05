@@ -48,7 +48,7 @@ static char USART_Receive(FILE *stream) //datasheet p.210, 219
 }
 
 // Emergency sequence
-int emergency(void)
+void emergency(void)
 {
     
 	TCNT1 = 0; // Reset timer to zero
@@ -62,25 +62,28 @@ int emergency(void)
 	TIMSK1 |= (1 << 1); // enable counter interrupt
 	     
 	sei();
-	
-	PORTB |= (1 << PB5); // Emergency led 
-    _delay_ms(1000);
-    OCR1A = 3968; // note C4 252 Hz, no prescaler  s. 151
-	TCCR1B |= (1 << 1); // Prescaler set to 8
-    PORTB &= ~(1 << PB5);
-	_delay_ms(1000);
-	OCR1A = 4848;
-    PORTB |= (1 << PB5);
-	_delay_ms(1000);
-	OCR1A = 6000;
-    PORTB &= ~(1 << PB5);
-	_delay_ms(1000);
-	OCR1A = 1000;
-    PORTB |= (1 << PB5);
-	_delay_ms(1000);
+	PORTD |= (1 << PD7);
+    
+    TCCR1B |= (1 << 1); // Prescaler set to 8
+    
+    uint16_t note = 1000;
+    PORTD |= (1 << PD7);
+    for (int i = 0; i < 6; i++) // Loop for playing note
+    {
+        OCR1A = note; // Note frequency
+        note = note+750;
+        _delay_ms(500);
+    }    
+         
+	// Disable all previously set settings
+    TCCR1A &= ~(1 << 6);
+    TCCR1A &= ~(1 << 0);
+    TCCR1B &= ~(1 << 4);
+    TIMSK1 &= ~(1 << 1);
+
 	OCR1A = 0;
-    PORTB &= ~(1 << PB5);
 	TCNT1 = 0;
+    PORTD &= ~(1 << PD7);
 }
 
 ISR (TIMER1_COMPA_vect) {}
@@ -127,13 +130,13 @@ int main(void)
                 case 0x03: // Blink movement LED 3x (FAULT)
                     for (int i = 0; i < 3; i++) {
                         PORTB |= (1 << PB0);
-                        _delay_ms(300);
+                        _delay_ms(200);
                         PORTB &= ~(1 << PB0);
-                        _delay_ms(300);
+                        _delay_ms(200);
                     }
                     break;
                 case 0x04: // Door LED ON
-                    PORTD |= (1 << PB7);
+                    PORTD |= (1 << PD7);
                     break;
                 case 0x05: // Door LED OFF
                     PORTD &= ~(1 << PD7);
