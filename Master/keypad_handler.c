@@ -43,7 +43,7 @@ int handle_keypad_input(void)
     			index = 0;
 			}
             
-            write_to_lcd("Choose floor:",floor);
+            write_to_lcd("Choose floor",floor);
 			_delay_ms(300); // debounce delay
 			
 		}

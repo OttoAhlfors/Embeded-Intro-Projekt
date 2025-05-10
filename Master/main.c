@@ -125,8 +125,10 @@ void handleEmergency(int currentFloor, char *doorOpen)
         escape = handleEmergencyKey();
         if (escape == 1)
         {
-            //state = DOOR_OPEN;
-            sendCommandToSlave(0x06);// Play buzzer melody
+            strcpy(doorOpen, "Door open");
+			displayFloorMessage("EMERGENCY %d", currentFloor, doorOpen);
+			sendCommandToSlave(0x06);// Play buzzer melody
+			strcpy(doorOpen, "Door closed");
             state = IDLE;
             break;
         }
@@ -146,9 +148,9 @@ int main(void)
 	TWBR = 0x03; // TWI bit rate register.
 	TWSR = 0x00; // TWI status register prescaler value set to 1
 
-	TWCR |= (1 << TWEN); // Must be set to enable the TWI, datasheet p. 248
+	TWCR |= (1 << TWEN); // Set to enable the TWI
 
-	DDRA &= ~(1 << PA0); // Emergency button as input
+	DDRA &= ~(1 << PA0); // Emergency button input
 	uint8_t emergency_button = 0;
     char message[50];
     char doorOpen[15] = "Door closed";
@@ -160,9 +162,9 @@ int main(void)
 		switch (state)
 		{
 		case IDLE:
-            displayFloorMessage("Floor: %d", currentFloor, doorOpen);
+            displayFloorMessage("Floor %d", currentFloor, doorOpen);
 			selectedFloor = handle_keypad_input(); // Updates keypad buffer
-            printf("t");
+            printf("Floornumber"); // Debuggin test prints
             printf("%d\n",selectedFloor);
 			if (selectedFloor >= 0 && selectedFloor <= 99)
 			{
@@ -201,25 +203,24 @@ int main(void)
                 }
                 else if (currentFloor == selectedFloor)
                 {
+					sendCommandToSlave(0x02); // Turn off movement LED
+					displayFloorMessage("Arrived on %d", currentFloor, doorOpen);
+					_delay_ms(500);
+					state = DOOR_OPEN;
                     break;
                 }
                 emergency_button = (PINA & (1 << PA0)); // Emergency check
                 if (emergency_button)
                 {   
                     handleEmergency(currentFloor, doorOpen);
+					_delay_ms(5000);
+					state = IDLE;
                     break;
                 }
 
-            }
-            sendCommandToSlave(0x02); // Turn off movement LED
-            displayFloorMessage("Arrived on %d", currentFloor, doorOpen);
-            
-            _delay_ms(1000);
-            state = DOOR_OPEN;
+            }  
         }
         break;
-
-
 
 		case DOOR_OPEN:
 			_delay_ms(100);
