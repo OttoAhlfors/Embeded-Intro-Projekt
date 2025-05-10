@@ -24,12 +24,12 @@
 static void USART_init(uint16_t ubrr)
 {
     UBRR0H = (unsigned char)(ubrr >> 8); // set baud rate in UBBR0H and UBBR0L p. 206
-    UBRR0L = (unsigned char)ubrr;
+    UBRR0L = (unsigned char)ubrr; //Setting up the UART
     UCSR0B |= (1 << RXEN0) | (1 << TXEN0); // enable receiver and transmitter in USART register B p. 206, 220
     UCSR0C |= (1 << USBS0) | (3 << UCSZ00); // frame format in UCSRnC
 }
 
-static void USART_Transmit(unsigned char data, FILE *stream)
+static void USART_Transmit(unsigned char data, FILE *stream) //Declaring a static function for a static byte
 { // p. 207
 	 /* Wait until the transmit buffer is empty*/
     while (!(UCSR0A & (1 << UDRE0))) {;} //datasheet p.207, p. 219
@@ -38,7 +38,7 @@ static void USART_Transmit(unsigned char data, FILE *stream)
 	UDR0 = data;
 }
 
-static char USART_Receive(FILE *stream) //datasheet p.210, 219
+static char USART_Receive(FILE *stream) //Defining a character input function for UART. datasheet p.210, 219
 {
 	/* Wait until the transmit buffer is empty*/
     while (!(UCSR0A & (1 << RXC0))) {;}
@@ -61,32 +61,32 @@ int emergency(void)
 	    
 	TIMSK1 |= (1 << 1); // enable counter interrupt
 	     
-	sei();
+	sei();   // Enabling global interrupts (Set Enable Interrupts)
 	
 	PORTB |= (1 << PB5); // Emergency led 
-    _delay_ms(1000);
+    _delay_ms(1000); //Delay program by 1 second.
     OCR1A = 3968; // note C4 252 Hz, no prescaler  s. 151
 	TCCR1B |= (1 << 1); // Prescaler set to 8
-    PORTB &= ~(1 << PB5);
-	_delay_ms(1000);
-	OCR1A = 4848;
-    PORTB |= (1 << PB5);
-	_delay_ms(1000);
-	OCR1A = 6000;
-    PORTB &= ~(1 << PB5);
-	_delay_ms(1000);
-	OCR1A = 1000;
-    PORTB |= (1 << PB5);
-	_delay_ms(1000);
-	OCR1A = 0;
-    PORTB &= ~(1 << PB5);
-	TCNT1 = 0;
+    PORTB &= ~(1 << PB5); //Set pin PB5 to high
+	_delay_ms(1000); //Delay by 1 second
+	OCR1A = 4848; //Change tone
+    PORTB |= (1 << PB5); // set pin PB 5 to high
+	_delay_ms(1000); //Delay by 1 second
+	OCR1A = 6000;  //Play a note
+    PORTB &= ~(1 << PB5);  //Set pin PB5 to high
+	_delay_ms(1000); //Delay by 1 second
+	OCR1A = 1000;  //Change tone
+    PORTB |= (1 << PB5);  //Set port PB5 to high
+	_delay_ms(1000); //Delay by 1 second
+	OCR1A = 0;  //Stop playing a note
+    PORTB &= ~(1 << PB5); //Set port PB5 to high
+	TCNT1 = 0;  //Reset timer1 counter to 1
 }
 
-ISR (TIMER1_COMPA_vect) {}
+ISR (TIMER1_COMPA_vect) {}  //Setting up Timer1 compare match A interrupt
 
-FILE uart_output = FDEV_SETUP_STREAM(USART_Transmit, NULL, _FDEV_SETUP_WRITE);
-FILE uart_input = FDEV_SETUP_STREAM(NULL, USART_Receive, _FDEV_SETUP_READ);
+FILE uart_output = FDEV_SETUP_STREAM(USART_Transmit, NULL, _FDEV_SETUP_WRITE); //Defining custom output for stdio functions
+FILE uart_input = FDEV_SETUP_STREAM(NULL, USART_Receive, _FDEV_SETUP_READ); //Defining custom input for stdio functions
 
 int main(void)
 {
@@ -95,9 +95,9 @@ int main(void)
     DDRB |= (1 << PB5);  // Emergency LED
     DDRB |= (1 << PB1);  // Buzzer (if used separately)
 
-    USART_init(MYUBBR);
-    stdout = &uart_output;
-    stdin = &uart_input;
+    USART_init(MYUBBR);   // Initializing the USART peripheral with a baud rate.
+    stdout = &uart_output; //Redirecting the output stream to use the UART.
+    stdin = &uart_input;  // Redirecting input to read from the UART.
 
     // Setup I²C as slave
     TWAR = (SLAVE_ADDRESS << 1);             // Slave address
@@ -105,16 +105,16 @@ int main(void)
 
     uint8_t twi_receive_data = 0; // Comes from Master
 	uint8_t twi_send_data = 1; // Data sent to Master
-    uint8_t twi_status = 0; 
+    uint8_t twi_status = 0; //Setting the status to 0.
 
     while (1) {
         while (!(TWCR & (1 << TWINT))) {;}   // Wait for TWI interrupt flag
 
         twi_status = (TWSR & 0xF8); // Mask prescaler bits
 
-        if ((twi_status == 0x80) || (twi_status == 0x90)) {
-            twi_receive_data = TWDR;
-            printf("%d\n", twi_receive_data);
+        if ((twi_status == 0x80) || (twi_status == 0x90)) {  // Checking the TWI status code.
+            twi_receive_data = TWDR; // Reading the received byte from the TWI data register and storing it in a variable.
+            printf("%d\n", twi_receive_data); // Print the received byte
 
             // React to master's command
             switch (twi_receive_data) {
@@ -139,7 +139,7 @@ int main(void)
                     PORTD &= ~(1 << PD7);
                     break;
                 case 0x06: // Emergency routine
-                    emergency();
+                    emergency(); 
                     break;
             }
         }
