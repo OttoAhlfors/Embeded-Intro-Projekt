@@ -56,19 +56,19 @@ void emergency(void)
 	    
 	TCCR1A |= (1 << 6); // Sets to output mode compare match
 	    
-	TCCR1A |= (1 << 0); // Sets counter to Normal mode s. 145, 154
+	TCCR1A |= (1 << 0); // Sets counter to Normal mode
 	TCCR1B |= (1 << 4); // Waveform generation mode
 	    
-	TIMSK1 |= (1 << 1); // enable counter interrupt
+	TIMSK1 |= (1 << 1); // Enable counter interrupt
 	     
 	sei();
-	PORTD |= (1 << PD7);
-    
+	PORTD |= (1 << PD7); // Dooropen LED
     TCCR1B |= (1 << 1); // Prescaler set to 8
     
     uint16_t note = 1000;
-    PORTD |= (1 << PD7);
-    for (int i = 0; i < 6; i++) // Loop for playing note
+    PORTD |= (1 << PD7); // Dooropen
+
+    for (int i = 0; i < 6; i++) // Loop for playing emergency note
     {
         OCR1A = note; // Note frequency
         note = note+750;
@@ -83,7 +83,8 @@ void emergency(void)
 
 	OCR1A = 0;
 	TCNT1 = 0;
-    PORTD &= ~(1 << PD7);
+	_delay_ms(2000);
+    PORTD &= ~(1 << PD7); // Close door
 }
 
 ISR (TIMER1_COMPA_vect) {}
@@ -94,9 +95,9 @@ FILE uart_input = FDEV_SETUP_STREAM(NULL, USART_Receive, _FDEV_SETUP_READ);
 int main(void)
 {
     DDRB |= (1 << PB0);  // Movement LED
-    DDRD |= (1 << PD7);  // Door LED OTA JOKU
+    DDRD |= (1 << PD7);  // Door LED
     DDRB |= (1 << PB5);  // Emergency LED
-    DDRB |= (1 << PB1);  // Buzzer (if used separately)
+    DDRB |= (1 << PB1);  // Buzzer
 
     USART_init(MYUBBR);
     stdout = &uart_output;
@@ -117,7 +118,7 @@ int main(void)
 
         if ((twi_status == 0x80) || (twi_status == 0x90)) {
             twi_receive_data = TWDR;
-            printf("%d\n", twi_receive_data);
+            printf("%d\n", twi_receive_data); // Transmission test print
 
             // React to master's command
             switch (twi_receive_data) {
@@ -130,9 +131,9 @@ int main(void)
                 case 0x03: // Blink movement LED 3x (FAULT)
                     for (int i = 0; i < 3; i++) {
                         PORTB |= (1 << PB0);
-                        _delay_ms(200);
+                        _delay_ms(300);
                         PORTB &= ~(1 << PB0);
-                        _delay_ms(200);
+                        _delay_ms(300);
                     }
                     break;
                 case 0x04: // Door LED ON
@@ -149,11 +150,8 @@ int main(void)
         else if ((twi_status == 0x88) || (twi_status == 0x98)) {
             // Data received but NACK'd
             twi_receive_data = TWDR;
+            printf("NACK");
             printf("%d\n", twi_receive_data);
-        }
-        else if (twi_status == 0xA8) {
-            // Slave transmitter mode
-            TWDR = 1; // Dummy response
         }
         else if (twi_status == 0xA0) {
             // STOP condition received
