@@ -2,15 +2,15 @@
  * Project_SLAVE_ATMEGA328p.c
  *
  * Created: 9.4.2025 2.37.47
- * Author : Jeremias Nousiainen
+ * Authors : Jeremias Nousiainen, Lauri Heininen, Otto Åhlfors, Juhani Juola
  *
- * Modified: 30.4.2025 , Lauri Heininen
  */ 
 // Arduino UNO Slave device
 
 #define F_CPU 16000000UL
 #define FOSC 16000000UL
 #define BAUD 9600
+
 #define MYUBBR (FOSC/16/BAUD-1) // baud rate register value, datasheet p.203, 226
 #define SLAVE_ADDRESS 0b1010111 // 87 as decimal. Address must be same as masters address
 
@@ -19,6 +19,7 @@
 #include <util/setbaud.h>
 #include <stdio.h>
 #include <avr/interrupt.h>
+
 
 // USART setup for debug output (unchanged)
 static void USART_init(uint16_t ubrr)

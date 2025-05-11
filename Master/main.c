@@ -2,9 +2,9 @@
  * Project_MASTER_ATMEGA2560.c
  *
  * Created: 5.4.2025 3.30.18
- * Author : Jeremias Nousiainen
+ * Authors : Jeremias Nousiainen, Lauri Heininen, Otto Åhlfors, Juhani Juola 
  *
- * Modified: 30.4.2025, Lauri Heininen
+ * 
  */
 
 // Arduino Mega Master device
@@ -13,7 +13,7 @@
 #define F_CPU 16000000UL
 #define FOSC 16000000UL
 #define BAUD 9600
-#define MYUBBR (FOSC / 16 / BAUD - 1) // baud rate register value, datasheet p.203, 226
+#define MYUBBR (FOSC / 16 / BAUD - 1) // baud rate register value
 #define SLAVE_ADDRESS 0b1010111		  // 87 as decimal
 
 #include <avr/io.h>
@@ -67,7 +67,7 @@ static void USART_Transmit(unsigned char data, FILE *stream)
 
 // USART receive helper
 static char USART_Receive(FILE *stream)
-{ // datasheet p.210, 219
+{
 	/* Wait until the transmit buffer is empty*/
 	while (!(UCSR0A & (1 << RXC0)))
 	{
