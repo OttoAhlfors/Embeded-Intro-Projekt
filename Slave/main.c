@@ -2,16 +2,16 @@
  * Project_SLAVE_ATMEGA328p.c
  *
  * Created: 9.4.2025 2.37.47
- * Author : Jeremias Nousiainen
+ * Authors : Jeremias Nousiainen, Lauri Heininen, Otto Åhlfors, Juhani Juola
  *
- * Modified: 30.4.2025 , Lauri Heininen
+ *
  */ 
 // Arduino UNO Slave device
 
 #define F_CPU 16000000UL
 #define FOSC 16000000UL
 #define BAUD 9600
-#define MYUBBR (FOSC/16/BAUD-1) // baud rate register value, datasheet p.203, 226
+#define MYUBBR (FOSC/16/BAUD-1) // baud rate register value
 #define SLAVE_ADDRESS 0b1010111 // 87 as decimal. Address must be same as masters address
 
 #include <avr/io.h>
@@ -20,24 +20,26 @@
 #include <stdio.h>
 #include <avr/interrupt.h>
 
-// USART setup for debug output (unchanged)
+// USART setup for debug output
 static void USART_init(uint16_t ubrr)
 {
-    UBRR0H = (unsigned char)(ubrr >> 8); // set baud rate in UBBR0H and UBBR0L p. 206
+    UBRR0H = (unsigned char)(ubrr >> 8); // set baud rate in UBBR0H and UBBR0L
     UBRR0L = (unsigned char)ubrr;
-    UCSR0B |= (1 << RXEN0) | (1 << TXEN0); // enable receiver and transmitter in USART register B p. 206, 220
+    UCSR0B |= (1 << RXEN0) | (1 << TXEN0); // enable receiver and transmitter in USART register B
     UCSR0C |= (1 << USBS0) | (3 << UCSZ00); // frame format in UCSRnC
 }
 
+// Data transmission set up for USART transmission
 static void USART_Transmit(unsigned char data, FILE *stream)
-{ // p. 207
+{
 	 /* Wait until the transmit buffer is empty*/
-    while (!(UCSR0A & (1 << UDRE0))) {;} //datasheet p.207, p. 219
+    while (!(UCSR0A & (1 << UDRE0))) {;}
  
 	/* Puts the data into a buffer, then sends/transmits the data */
 	UDR0 = data;
 }
 
+// Data receiving set up for USART transmission
 static char USART_Receive(FILE *stream) //datasheet p.210, 219
 {
 	/* Wait until the transmit buffer is empty*/
@@ -87,8 +89,9 @@ void emergency(void)
     PORTD &= ~(1 << PD7); // Close door
 }
 
-ISR (TIMER1_COMPA_vect) {}
+ISR (TIMER1_COMPA_vect) {}// Configuration to start the buzzer
 
+// Configures the input/output streams for USART
 FILE uart_output = FDEV_SETUP_STREAM(USART_Transmit, NULL, _FDEV_SETUP_WRITE);
 FILE uart_input = FDEV_SETUP_STREAM(NULL, USART_Receive, _FDEV_SETUP_READ);
 
@@ -99,7 +102,9 @@ int main(void)
     DDRB |= (1 << PB5);  // Emergency LED
     DDRB |= (1 << PB1);  // Buzzer
 
-    USART_init(MYUBBR);
+    USART_init(MYUBBR); // Initializes USART
+
+    // Allows printing and reading of the received and transmitted values
     stdout = &uart_output;
     stdin = &uart_input;
 
