@@ -8,7 +8,6 @@
 #include "lcd_handler.h"
 
 // These functions are based on LUT Inroduction To Embeded Systems course Exercise 3 example solution
-
 void lcd_setup()
 {
 	lcd_init(LCD_DISP_ON); // Initialize LCD with display on, cursor off
